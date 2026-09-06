@@ -24,8 +24,10 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function trackOne(trackingNumber, carrier, apiKey, attempt = 0) {
   try {
+    const params = { tracking_number: trackingNumber };
+    if (carrier) params.carrier_code = carrier;
     const res = await axios.get('https://api.shipengine.com/v1/tracking', {
-      params: { carrier_code: carrier, tracking_number: trackingNumber },
+      params,
       headers: { 'API-Key': apiKey },
       timeout: 20000,
     });
@@ -77,10 +79,15 @@ async function trackOne(trackingNumber, carrier, apiKey, attempt = 0) {
       await sleep(waitMs);
       return trackOne(trackingNumber, carrier, apiKey, attempt + 1);
     }
+    const errMsg = err.response?.data?.errors?.[0]?.message || err.message || '';
+    // carrier_code không hợp lệ → retry không có carrier_code (ShipEngine tự detect)
+    if (carrier && errMsg.toLowerCase().includes('carrier_code') && attempt === 0) {
+      return trackOne(trackingNumber, null, apiKey, 1);
+    }
     return {
       success: false,
       tracking_number: trackingNumber,
-      error: err.response?.data?.errors?.[0]?.message || err.message,
+      error: errMsg,
     };
   }
 }
