@@ -381,9 +381,8 @@ input[type=checkbox]{accent-color:#4dabf7}
   <form id="sf" onsubmit="saveSettings(event)">
     <h3>PrimeHorizon API</h3>
     <label>API Base URL<input name="apiBase" type="text" placeholder="https://api-tool.primehorizon.studio"/></label>
-    <label>API Key (etsy_...)<input name="apiKey" type="text" placeholder="etsy_..." autocomplete="off"/></label>
     <h3>ShipEngine</h3>
-    <label>API Key<input name="shipengineKey" type="text" autocomplete="off"/></label>
+    <label>API Key <span id="seKeyStatus" style="color:#74c69d;font-size:10px"></span><input name="shipengineKey" type="text" placeholder="để trống nếu không đổi" autocomplete="off"/></label>
     <label>Default Carrier<input name="carrierCode" type="text" placeholder="usps"/></label>
     <h3>Cron Main (đơn in-transit)</h3>
     <label><input name="enabled" type="checkbox"/> Bật cron main</label>
@@ -474,8 +473,9 @@ async function loadSettingsForm() {
   const f = document.getElementById('sf');
   const hoursStr = arr => (arr||[]).join(',');
   f.apiBase.value = s.apiBase || 'https://api-tool.primehorizon.studio';
-  f.apiKey.value = '';  // không điền key đã che
   f.shipengineKey.value = '';
+  const seStatus = document.getElementById('seKeyStatus');
+  if (seStatus) seStatus.textContent = s.shipengineKey ? '✓ đã lưu' : '';
   f.carrierCode.value = s.carrierCode || 'usps';
   f.enabled.checked = !!s.enabled;
   f.runHours.value = hoursStr(s.runHours);
@@ -514,7 +514,6 @@ async function saveSettings(e) {
     windowDays: Number(f.windowDays.value)||14,
     timezone: f.timezone.value.trim()||'Asia/Ho_Chi_Minh',
   };
-  if (f.apiKey.value.trim()) patch.apiKey = f.apiKey.value.trim();
   if (f.shipengineKey.value.trim()) patch.shipengineKey = f.shipengineKey.value.trim();
   await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(patch)});
   addLog({ts:new Date().toISOString(),level:'ok',message:'Settings đã lưu & cron đã reschedule.'});
