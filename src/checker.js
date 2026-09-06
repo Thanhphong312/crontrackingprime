@@ -13,7 +13,7 @@ const CHUNK_DELAY_MS = 1200;
 
 async function runCheck(settings, emit, reason = 'cron', kind = 'main') {
   if (!settings.shipengineKey) { emit('error', 'Chưa nhập ShipEngine API key'); return null; }
-  if (!settings.apiBase || !settings.apiKey) { emit('error', 'Chưa cấu hình API Base / API Key'); return null; }
+  if (!settings.apiBase) { emit('error', 'Chưa cấu hình API Base'); return null; }
 
   const isPre = kind === 'pre';
   const tag = `${kind}·${reason}`;
@@ -37,7 +37,12 @@ async function runCheck(settings, emit, reason = 'cron', kind = 'main') {
   for (let i = 0; i < orders.length; i += CHUNK) {
     const chunk = orders.slice(i, i + CHUNK);
     const results = await Promise.all(
-      chunk.map((o) => trackOne(o.tracking_number, o.tracking_carrier || settings.carrierCode || 'usps', settings.shipengineKey)),
+      chunk.map((o) => {
+        const raw = (o.tracking_carrier || '').toLowerCase().trim();
+        const VALID = new Set(['usps','ups','fedex','dhl_express','stamps_com','canada_post','australia_post','royal_mail','dhl','ontrac']);
+        const carrier = VALID.has(raw) ? raw : (settings.carrierCode || 'usps');
+        return trackOne(o.tracking_number, carrier, settings.shipengineKey);
+      }),
     );
 
     // Attach order_id vào mỗi kết quả
@@ -75,7 +80,7 @@ async function runCheck(settings, emit, reason = 'cron', kind = 'main') {
 }
 
 async function runAlert(settings, emit, reason = 'cron') {
-  if (!settings.apiBase || !settings.apiKey) { emit('error', 'Chưa cấu hình API Base / API Key'); return null; }
+  if (!settings.apiBase) { emit('error', 'Chưa cấu hình API Base'); return null; }
   const { postAlert } = require('./api');
   emit('info', `[alert·${reason}] kiểm đơn tracking bị kẹt…`);
   try {
