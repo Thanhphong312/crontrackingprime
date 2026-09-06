@@ -2,7 +2,9 @@ services:
   cron:
     image: node:20-alpine
     working_dir: /app
-    command: node src/server.js
+    command: sh -c "npm install --omit=dev --prefer-offline && node src/server.js"
+    ports:
+      - "3500:3500"
     volumes:
       - .:/app
       - /app/node_modules
