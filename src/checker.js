@@ -37,12 +37,7 @@ async function runCheck(settings, emit, reason = 'cron', kind = 'main') {
   for (let i = 0; i < orders.length; i += CHUNK) {
     const chunk = orders.slice(i, i + CHUNK);
     const results = await Promise.all(
-      chunk.map((o) => {
-        const raw = (o.tracking_carrier || '').toLowerCase().trim();
-        const VALID = new Set(['usps','ups','fedex','dhl_express','stamps_com','canada_post','australia_post','royal_mail','dhl','ontrac']);
-        const carrier = VALID.has(raw) ? raw : (settings.carrierCode || 'usps');
-        return trackOne(o.tracking_number, carrier, settings.shipengineKey);
-      }),
+      chunk.map((o) => trackOne(o.tracking_number, settings.carrierCode || 'usps', settings.shipengineKey)),
     );
 
     // Attach order_id vào mỗi kết quả
