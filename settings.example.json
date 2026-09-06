@@ -1,5 +1,5 @@
 {
-  "apiBase": "http://157.230.50.159:5102",
+  "apiBase": "https://api-tool.primehorizon.studio",
 
   "shipengineKey": "YOUR_SHIPENGINE_API_KEY",
   "carrierCode": "usps",

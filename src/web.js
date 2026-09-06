@@ -380,7 +380,7 @@ input[type=checkbox]{accent-color:#4dabf7}
 <div id="panelSettings" class="panel">
   <form id="sf" onsubmit="saveSettings(event)">
     <h3>PrimeHorizon API</h3>
-    <label>API Base URL<input name="apiBase" type="text" placeholder="http://157.230.50.159:5102"/></label>
+    <label>API Base URL<input name="apiBase" type="text" placeholder="https://api-tool.primehorizon.studio"/></label>
     <label>API Key (etsy_...)<input name="apiKey" type="text" placeholder="etsy_..." autocomplete="off"/></label>
     <h3>ShipEngine</h3>
     <label>API Key<input name="shipengineKey" type="text" autocomplete="off"/></label>
@@ -473,7 +473,7 @@ async function loadSettingsForm() {
   const s = r.data || {};
   const f = document.getElementById('sf');
   const hoursStr = arr => (arr||[]).join(',');
-  f.apiBase.value = s.apiBase || 'http://157.230.50.159:5102';
+  f.apiBase.value = s.apiBase || 'https://api-tool.primehorizon.studio';
   f.apiKey.value = '';  // không điền key đã che
   f.shipengineKey.value = '';
   f.carrierCode.value = s.carrierCode || 'usps';
