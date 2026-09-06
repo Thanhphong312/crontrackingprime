@@ -1,0 +1,14 @@
+services:
+  cron:
+    image: node:20-alpine
+    working_dir: /app
+    command: node src/server.js
+    volumes:
+      - .:/app
+      - /app/node_modules
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

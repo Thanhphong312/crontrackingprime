@@ -1,0 +1,24 @@
+{
+  "apiBase": "http://YOUR_BETOOL_HOST:5102",
+  "apiKey": "etsy_YOUR_API_KEY",
+
+  "shipengineKey": "YOUR_SHIPENGINE_API_KEY",
+  "carrierCode": "usps",
+
+  "enabled": true,
+  "runHours": [0, 6, 12, 18],
+  "batchLimit": 80,
+
+  "preEnabled": true,
+  "preRunHours": [0, 3, 6, 9, 12, 15, 18, 21],
+  "preBatchLimit": 40,
+
+  "alertEnabled": true,
+  "alertRunHours": [7, 13, 19],
+  "lateIntransitHours": 48,
+  "lateDeliveredHours": 96,
+  "repeatHours": 12,
+  "windowDays": 14,
+
+  "timezone": "Asia/Ho_Chi_Minh"
+}
