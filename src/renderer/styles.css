@@ -1,0 +1,55 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; background: #0f111a; color: #c8cdd9; }
+.app { display: flex; flex-direction: column; height: 100vh; padding: 12px; gap: 10px; }
+header { display: flex; align-items: center; gap: 10px; }
+header h1 { font-size: 16px; font-weight: 700; color: #e6eaf2; flex: 1; }
+.badge { padding: 3px 9px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+.badge.idle { background: #2a2d3a; color: #888; }
+.badge.running { background: #1a3a5c; color: #4dabf7; }
+
+.stats-row { display: flex; gap: 8px; }
+.stat-box { flex: 1; background: #1a1d2e; border: 1px solid #2a2d3a; border-radius: 8px; padding: 10px 8px; text-align: center; }
+.stat-val { font-size: 22px; font-weight: 700; color: #4dabf7; }
+.stat-lbl { font-size: 10px; color: #666; margin-top: 2px; }
+
+.by-status { display: flex; flex-wrap: wrap; gap: 6px; min-height: 24px; }
+.status-chip { background: #1e2235; border: 1px solid #2d3148; border-radius: 5px; padding: 3px 8px; font-size: 11px; color: #aab; }
+.status-chip.delivered { border-color: #2d6a4f; color: #74c69d; }
+.status-chip.in_transit { border-color: #1e4d7b; color: #4dabf7; }
+.status-chip.alert, .status-chip.return_to_sender { border-color: #7b1e1e; color: #f77; }
+.status-chip.out_for_delivery { border-color: #4a3a00; color: #ffd43b; }
+
+.actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.btn { padding: 6px 14px; border: 1px solid #2a2d3a; border-radius: 6px; background: #1a1d2e; color: #c8cdd9; cursor: pointer; font-size: 12px; transition: background .15s; }
+.btn:hover { background: #252840; }
+.btn.primary { background: #1a3a5c; border-color: #1e4d7b; color: #4dabf7; }
+.btn.primary:hover { background: #1e4d7b; }
+.btn.warning { background: #3a2a00; border-color: #5a4200; color: #ffd43b; }
+.btn.warning:hover { background: #5a4200; }
+.btn.small { padding: 4px 10px; font-size: 11px; }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
+
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid #2a2d3a; }
+.tab { padding: 6px 14px; background: none; border: none; color: #666; cursor: pointer; font-size: 12px; border-bottom: 2px solid transparent; }
+.tab.active { color: #4dabf7; border-bottom-color: #4dabf7; }
+
+.tab-panel { display: none; flex: 1; overflow: hidden; }
+.tab-panel.active { display: flex; flex-direction: column; }
+
+.log-toolbar { display: flex; justify-content: flex-end; padding: 4px 0; }
+#logBox { flex: 1; overflow-y: auto; background: #080a10; border: 1px solid #1a1d2e; border-radius: 6px; padding: 8px; font-family: 'Menlo', 'Consolas', monospace; font-size: 11px; line-height: 1.6; }
+.log-line { padding: 1px 0; }
+.log-line.info { color: #aab; }
+.log-line.ok { color: #74c69d; }
+.log-line.error { color: #f77; }
+.log-line.warn { color: #ffd43b; }
+.log-ts { color: #444; margin-right: 6px; }
+
+#tabSettings { overflow-y: auto; padding: 4px 0; }
+#settingsForm { display: flex; flex-direction: column; gap: 6px; }
+#settingsForm h3 { font-size: 12px; color: #888; margin-top: 10px; text-transform: uppercase; letter-spacing: .5px; }
+#settingsForm label { display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: #aab; }
+#settingsForm input[type=text], #settingsForm input[type=number] { background: #1a1d2e; border: 1px solid #2a2d3a; border-radius: 5px; padding: 5px 8px; color: #e6eaf2; font-size: 12px; }
+#settingsForm input[type=checkbox] { width: 14px; height: 14px; accent-color: #4dabf7; }
+#settingsForm label:has(input[type=checkbox]) { flex-direction: row; align-items: center; gap: 6px; }
+.form-actions { margin-top: 12px; }

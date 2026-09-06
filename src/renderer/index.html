@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'" />
+  <title>Cron Tracking PrimeHorizon</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>Cron Tracking PrimeHorizon</h1>
+      <span id="statusBadge" class="badge idle">Idle</span>
+    </header>
+
+    <!-- Stats -->
+    <section class="stats-row" id="statsRow">
+      <div class="stat-box"><div class="stat-val" id="s_tracked">—</div><div class="stat-lbl">Tracked</div></div>
+      <div class="stat-box"><div class="stat-val" id="s_pre">—</div><div class="stat-lbl">Pre-Shipment</div></div>
+      <div class="stat-box"><div class="stat-val" id="s_transit">—</div><div class="stat-lbl">In Transit</div></div>
+      <div class="stat-box"><div class="stat-val" id="s_delivered">—</div><div class="stat-lbl">Delivered</div></div>
+      <div class="stat-box"><div class="stat-val" id="s_pending">—</div><div class="stat-lbl">Pending</div></div>
+    </section>
+
+    <!-- By status breakdown -->
+    <section class="by-status" id="byStatus"></section>
+
+    <!-- Actions -->
+    <section class="actions">
+      <button id="btnRunMain" class="btn primary">▶ Run Main (in-transit)</button>
+      <button id="btnRunPre" class="btn">▶ Run Pre (chưa transit)</button>
+      <button id="btnRunAlert" class="btn warning">🔔 Run Alert</button>
+      <button id="btnRunAll" class="btn">▶ Run All</button>
+      <button id="btnRefresh" class="btn small">⟳ Stats</button>
+    </section>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" data-tab="logs">Logs</button>
+      <button class="tab" data-tab="settings">Settings</button>
+    </div>
+
+    <!-- Logs -->
+    <div id="tabLogs" class="tab-panel active">
+      <div class="log-toolbar">
+        <button id="btnClearLog" class="btn small">Xoá log</button>
+      </div>
+      <div id="logBox"></div>
+    </div>
+
+    <!-- Settings -->
+    <div id="tabSettings" class="tab-panel">
+      <form id="settingsForm">
+        <h3>PrimeHorizon API</h3>
+        <label>API Base URL<input name="apiBase" type="text" placeholder="http://localhost:5102" /></label>
+        <label>API Key (etsy_...)<input name="apiKey" type="text" placeholder="etsy_..." /></label>
+
+        <h3>ShipEngine</h3>
+        <label>API Key<input name="shipengineKey" type="text" /></label>
+        <label>Default Carrier<input name="carrierCode" type="text" placeholder="usps" /></label>
+
+        <h3>Cron Main (đơn đang in-transit)</h3>
+        <label><input name="enabled" type="checkbox" /> Bật cron main</label>
+        <label>Giờ chạy (VD: 0,6,12,18)<input name="runHours" type="text" placeholder="0,6,12,18" /></label>
+        <label>Batch limit<input name="batchLimit" type="number" min="1" max="200" /></label>
+
+        <h3>Cron Pre (đơn chưa transit)</h3>
+        <label><input name="preEnabled" type="checkbox" /> Bật cron pre</label>
+        <label>Giờ chạy<input name="preRunHours" type="text" placeholder="0,3,6,9,12,15,18,21" /></label>
+        <label>Batch limit<input name="preBatchLimit" type="number" min="1" max="200" /></label>
+
+        <h3>Cron Alert Telegram</h3>
+        <label><input name="alertEnabled" type="checkbox" /> Bật cron alert</label>
+        <label>Giờ chạy<input name="alertRunHours" type="text" placeholder="7,13,19" /></label>
+        <label>Chưa transit sau (giờ)<input name="lateIntransitHours" type="number" min="1" /></label>
+        <label>Chưa delivered sau (giờ)<input name="lateDeliveredHours" type="number" min="1" /></label>
+        <label>Nhắc lại sau (giờ)<input name="repeatHours" type="number" min="1" /></label>
+        <label>Cửa sổ quét (ngày)<input name="windowDays" type="number" min="1" /></label>
+
+        <h3>Timezone</h3>
+        <label>Timezone<input name="timezone" type="text" placeholder="Asia/Ho_Chi_Minh" /></label>
+
+        <div class="form-actions">
+          <button type="submit" class="btn primary">💾 Lưu Settings</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <script src="renderer.js"></script>
+</body>
+</html>

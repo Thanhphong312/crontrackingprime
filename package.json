@@ -1,0 +1,14 @@
+{
+  "name": "crontrackingprime",
+  "version": "1.0.0",
+  "description": "Cron tracking cho PrimeHorizon Etsy — poll ShipEngine + alert Telegram",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "dependencies": {
+    "axios": "^1.7.2",
+    "electron": "^31.0.0",
+    "node-cron": "^3.0.3"
+  }
+}
