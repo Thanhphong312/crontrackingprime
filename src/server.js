@@ -57,10 +57,11 @@ async function doRun(kind) {
   if (running[kind]) { emit('info', `[${kind}] đang chạy — bỏ qua lần này.`); return; }
   running[kind] = true;
   try {
+    const s = loadSettings() || settings;
     if (kind === 'alert') {
-      await runAlert(settings, emit, 'cron');
+      await runAlert(s, emit, 'cron');
     } else {
-      await runCheck(settings, emit, 'cron', kind);
+      await runCheck(s, emit, 'cron', kind);
     }
   } catch (err) {
     emit('error', `[${kind}] unhandled: ${err.message}`);
@@ -86,7 +87,11 @@ scheduleKind('main', settings.runHours, settings.enabled !== false);
 scheduleKind('pre', settings.preRunHours, settings.preEnabled !== false);
 scheduleKind('alert', settings.alertRunHours, settings.alertEnabled !== false);
 
-// ── Stats on start ────────────────────────────────────────────────────────────
+// ── Web dashboard ─────────────────────────────────────────────────────────────
+const { startWebServer, pushLog } = require('./web');
+startWebServer(emit);
+
+// Stats on start
 fetchStats(settings).then((s) => {
   emit('info', `Stats: tracked=${s.tracked} in_transit=${s.in_transit} delivered=${s.delivered} pending=${s.pending}`);
 }).catch(() => { emit('warn', 'Không lấy được stats từ API'); });
