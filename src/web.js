@@ -14,7 +14,42 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const { runCheck, runAlert, fetchStats } = require('./checker');
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+const WEB_USER = process.env.WEB_USER || 'admin';
+const WEB_PASS = process.env.WEB_PASS || 'Qe4]%U@5=3h=gUaA';
+const sessions = new Map(); // token → expiry
+
+function genToken() { return crypto.randomBytes(24).toString('hex'); }
+
+function createSession() {
+  const token = genToken();
+  sessions.set(token, Date.now() + 8 * 3600 * 1000); // 8h
+  return token;
+}
+
+function isValidSession(token) {
+  if (!token) return false;
+  const exp = sessions.get(token);
+  if (!exp) return false;
+  if (Date.now() > exp) { sessions.delete(token); return false; }
+  return true;
+}
+
+function getCookie(req, name) {
+  const header = req.headers.cookie || '';
+  for (const part of header.split(';')) {
+    const [k, v] = part.trim().split('=');
+    if (k === name) return v;
+  }
+  return null;
+}
+
+function checkAuth(req) {
+  return isValidSession(getCookie(req, 'sid'));
+}
 
 // ── Settings (shared với server.js) ──────────────────────────────────────────
 const SETTINGS_PATHS = [
@@ -77,11 +112,64 @@ function router(req, res) {
   const url = new URL(req.url, `http://localhost`);
   const pathname = url.pathname;
 
-  // CORS cho trường hợp gọi từ ngoài
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
+
+  // ── Login page ──
+  if (pathname === '/login') {
+    if (req.method === 'GET') {
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(LOGIN_HTML);
+      return;
+    }
+    if (req.method === 'POST') {
+      let body = '';
+      req.on('data', d => { body += d; });
+      req.on('end', () => {
+        const params = new URLSearchParams(body);
+        const u = params.get('username') || '';
+        const p = params.get('password') || '';
+        if (u === WEB_USER && p === WEB_PASS) {
+          const token = createSession();
+          res.writeHead(302, {
+            'Set-Cookie': `sid=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=28800`,
+            'Location': '/',
+          });
+          res.end();
+        } else {
+          res.writeHead(302, { 'Location': '/login?err=1' });
+          res.end();
+        }
+      });
+      return;
+    }
+  }
+
+  // ── Logout ──
+  if (pathname === '/logout') {
+    const token = getCookie(req, 'sid');
+    if (token) sessions.delete(token);
+    res.writeHead(302, {
+      'Set-Cookie': 'sid=; Path=/; Max-Age=0',
+      'Location': '/login',
+    });
+    res.end();
+    return;
+  }
+
+  // ── Auth guard ──
+  if (!checkAuth(req)) {
+    if (pathname.startsWith('/api/')) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, error: 'Unauthorized' }));
+    } else {
+      res.writeHead(302, { 'Location': '/login' });
+      res.end();
+    }
+    return;
+  }
 
   // SSE logs stream
   if (pathname === '/api/logs' && req.method === 'GET') {
@@ -173,6 +261,43 @@ function router(req, res) {
   res.writeHead(404); res.end('Not found');
 }
 
+// ── Login HTML ────────────────────────────────────────────────────────────────
+const LOGIN_HTML = `<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Login — Cron Tracking PrimeHorizon</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f111a;color:#c8cdd9;display:flex;align-items:center;justify-content:center;min-height:100vh}
+.card{background:#1a1d2e;border:1px solid #2a2d3a;border-radius:12px;padding:32px 28px;width:320px;display:flex;flex-direction:column;gap:14px}
+h2{font-size:16px;color:#e6eaf2;text-align:center;margin-bottom:4px}
+label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:#aab}
+input{background:#0f111a;border:1px solid #2a2d3a;border-radius:6px;padding:8px 10px;color:#e6eaf2;font-size:13px;width:100%}
+input:focus{outline:none;border-color:#4dabf7}
+.btn{padding:9px;border:none;border-radius:6px;background:#1a3a5c;color:#4dabf7;font-size:13px;font-weight:600;cursor:pointer;transition:background .15s}
+.btn:hover{background:#1e4d7b}
+.err{color:#f77;font-size:12px;text-align:center;display:none}
+.err.show{display:block}
+</style>
+</head>
+<body>
+<div class="card">
+  <h2>🔐 Cron Tracking PrimeHorizon</h2>
+  <form method="POST" action="/login">
+    <label>Username<input name="username" type="text" autocomplete="username" autofocus/></label>
+    <label>Password<input name="password" type="password" autocomplete="current-password"/></label>
+    <div class="err${(typeof location !== 'undefined' && location.search.includes('err=1')) ? ' show' : ''}" id="err">Sai username hoặc password.</div>
+    <button class="btn" type="submit">Đăng nhập</button>
+  </form>
+</div>
+<script>
+if (location.search.includes('err=1')) document.getElementById('err').classList.add('show');
+</script>
+</body>
+</html>`;
+
 // ── Dashboard HTML (inline, không cần static files) ───────────────────────────
 const DASHBOARD_HTML = `<!DOCTYPE html>
 <html lang="vi">
@@ -225,6 +350,7 @@ input[type=checkbox]{accent-color:#4dabf7}
 <div class="row" style="align-items:center">
   <h1 style="flex:1">Cron Tracking PrimeHorizon</h1>
   <span id="badge" class="badge idle">Idle</span>
+  <a href="/logout" style="margin-left:10px;font-size:11px;color:#666;text-decoration:none;padding:4px 10px;border:1px solid #2a2d3a;border-radius:5px">Logout</a>
 </div>
 <div class="row" id="statsRow">
   <div class="stat-box"><div class="stat-val" id="s_tracked">—</div><div class="stat-lbl">Tracked</div></div>
