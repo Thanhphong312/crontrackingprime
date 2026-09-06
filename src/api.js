@@ -1,13 +1,11 @@
 /**
  * Wrapper gọi PrimeHorizon API (be-tool).
- * Xác thực bằng X-API-Key.
  */
 const axios = require('axios');
 
 function client(settings) {
   return axios.create({
     baseURL: settings.apiBase,
-    headers: { 'X-API-Key': settings.apiKey },
     timeout: 30000,
   });
 }
