@@ -35,8 +35,8 @@ if (!settings) {
   process.exit(1);
 }
 
-if (!settings.apiBase || !settings.apiKey) {
-  console.error('[server] settings.json thiếu apiBase hoặc apiKey.');
+if (!settings.apiBase) {
+  console.error('[server] settings.json thiếu apiBase.');
   process.exit(1);
 }
 if (!settings.shipengineKey) {
