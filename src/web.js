@@ -473,7 +473,7 @@ async function loadSettingsForm() {
   const s = r.data || {};
   const f = document.getElementById('sf');
   const hoursStr = arr => (arr||[]).join(',');
-  f.apiBase.value = s.apiBase || '';
+  f.apiBase.value = s.apiBase || 'http://157.230.50.159:5102';
   f.apiKey.value = '';  // không điền key đã che
   f.shipengineKey.value = '';
   f.carrierCode.value = s.carrierCode || 'usps';

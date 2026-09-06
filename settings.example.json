@@ -1,5 +1,5 @@
 {
-  "apiBase": "http://YOUR_BETOOL_HOST:5102",
+  "apiBase": "http://157.230.50.159:5102",
 
   "shipengineKey": "YOUR_SHIPENGINE_API_KEY",
   "carrierCode": "usps",
