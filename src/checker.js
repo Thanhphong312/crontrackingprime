@@ -11,30 +11,13 @@ const { trackOne } = require('./shipengine');
 const CHUNK = 8;
 const CHUNK_DELAY_MS = 1200;
 
-// Map tên carrier phổ biến → ShipEngine carrier_code
-// null = để ShipEngine tự detect (tốt hơn là dùng sai code)
-const CARRIER_MAP = {
-  usps: 'usps',
-  'united states postal service': 'usps',
-  ups: 'ups',
-  fedex: 'fedex',
-  dhl: 'dhl_express',
-  'dhl express': 'dhl_express',
-  'dhl ecommerce': 'dhl_ecommerce',
-  '4px': null,
-  '4px express': null,
-  '4px worldwide express': null,
-  stamps_com: 'stamps_com',
-  ontrac: 'ontrac',
-  asendia: 'asendia',
-};
+// Chỉ check USPS — các carrier khác skip
+const USPS_CARRIERS = new Set(['usps', 'united states postal service', 'stamps_com', 'stamps.com']);
 
 function resolveCarrier(orderCarrier, defaultCarrier) {
-  if (!orderCarrier) return defaultCarrier || 'usps';
-  const key = orderCarrier.toLowerCase().trim();
-  if (key in CARRIER_MAP) return CARRIER_MAP[key]; // null = auto-detect
-  if (/^[a-z0-9_]+$/.test(key)) return key; // Đã là ShipEngine code
-  return null; // Không rõ → để ShipEngine tự detect
+  const key = (orderCarrier || defaultCarrier || '').toLowerCase().trim();
+  if (USPS_CARRIERS.has(key)) return 'usps';
+  return null; // Non-USPS → skip
 }
 
 async function runCheck(settings, emit, reason = 'cron', kind = 'main') {
