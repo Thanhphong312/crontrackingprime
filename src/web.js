@@ -617,6 +617,7 @@ tr:hover td{background:#141620}
       <th>Tracking</th>
       <th>Status</th>
       <th>Mô tả</th>
+      <th>Ngày tạo đơn</th>
       <th>Fulfilled</th>
       <th>Last Event</th>
     </tr>
@@ -678,6 +679,7 @@ async function load(page) {
         '<td class="tracking">' + esc(item.tracking_number || '—') + (item.tracking_carrier ? '<br><span style="color:#555">'+esc(item.tracking_carrier)+'</span>' : '') + '</td>' +
         '<td><span class="chip ' + st + '">' + esc(label) + '</span></td>' +
         '<td class="desc" title="' + esc(item.status_description||'') + '">' + esc(item.status_description || '—') + '</td>' +
+        '<td style="white-space:nowrap">' + fmt(item.ordered_at) + '</td>' +
         '<td style="white-space:nowrap">' + fmt(item.fulfilled_at) + '</td>' +
         '<td style="white-space:nowrap">' + fmt(item.last_event_at) + '</td>' +
         '</tr>';
