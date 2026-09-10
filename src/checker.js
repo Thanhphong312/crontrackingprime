@@ -65,6 +65,7 @@ async function runCheck(settings, emit, reason = 'cron', kind = 'main') {
     const results = await Promise.all(
       chunk.map((o) => {
         const carrier = resolveCarrier(o.tracking_carrier, settings.carrierCode);
+        if (!carrier) return Promise.resolve({ success: false, skipped: true, tracking_number: o.tracking_number });
         return trackOne(o.tracking_number, carrier, settings.shipengineKey);
       }),
     );
@@ -74,6 +75,7 @@ async function runCheck(settings, emit, reason = 'cron', kind = 'main') {
     for (let j = 0; j < chunk.length; j++) {
       const order = chunk[j];
       const res = results[j];
+      if (res?.skipped) continue; // carrier không hỗ trợ — bỏ qua im lặng
       if (!res || !res.success) {
         totals.errors++;
         emit('error', `  ${order.etsy_order_id || order.id}: ${res?.error || 'no result'}`);
