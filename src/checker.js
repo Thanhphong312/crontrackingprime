@@ -11,6 +11,32 @@ const { trackOne } = require('./shipengine');
 const CHUNK = 8;
 const CHUNK_DELAY_MS = 1200;
 
+// Map tên carrier phổ biến → ShipEngine carrier_code
+// null = để ShipEngine tự detect (tốt hơn là dùng sai code)
+const CARRIER_MAP = {
+  usps: 'usps',
+  'united states postal service': 'usps',
+  ups: 'ups',
+  fedex: 'fedex',
+  dhl: 'dhl_express',
+  'dhl express': 'dhl_express',
+  'dhl ecommerce': 'dhl_ecommerce',
+  '4px': null,
+  '4px express': null,
+  '4px worldwide express': null,
+  stamps_com: 'stamps_com',
+  ontrac: 'ontrac',
+  asendia: 'asendia',
+};
+
+function resolveCarrier(orderCarrier, defaultCarrier) {
+  if (!orderCarrier) return defaultCarrier || 'usps';
+  const key = orderCarrier.toLowerCase().trim();
+  if (key in CARRIER_MAP) return CARRIER_MAP[key]; // null = auto-detect
+  if (/^[a-z0-9_]+$/.test(key)) return key; // Đã là ShipEngine code
+  return null; // Không rõ → để ShipEngine tự detect
+}
+
 async function runCheck(settings, emit, reason = 'cron', kind = 'main') {
   if (!settings.shipengineKey) { emit('error', 'Chưa nhập ShipEngine API key'); return null; }
   if (!settings.apiBase) { emit('error', 'Chưa cấu hình API Base'); return null; }
@@ -37,7 +63,10 @@ async function runCheck(settings, emit, reason = 'cron', kind = 'main') {
   for (let i = 0; i < orders.length; i += CHUNK) {
     const chunk = orders.slice(i, i + CHUNK);
     const results = await Promise.all(
-      chunk.map((o) => trackOne(o.tracking_number, settings.carrierCode || 'usps', settings.shipengineKey)),
+      chunk.map((o) => {
+        const carrier = resolveCarrier(o.tracking_carrier, settings.carrierCode);
+        return trackOne(o.tracking_number, carrier, settings.shipengineKey);
+      }),
     );
 
     // Attach order_id vào mỗi kết quả
