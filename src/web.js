@@ -199,6 +199,33 @@ function router(req, res) {
     return;
   }
 
+  // Orders list (proxy to be-tool /api/tracking-poll/orders)
+  if (pathname === '/api/orders' && req.method === 'GET') {
+    const axios = require('axios');
+    const s = loadSettings();
+    const params = {};
+    if (url.searchParams.get('status')) params.status = url.searchParams.get('status');
+    if (url.searchParams.get('page')) params.page = url.searchParams.get('page');
+    if (url.searchParams.get('per_page')) params.per_page = url.searchParams.get('per_page');
+    axios.get(`${s.apiBase}/api/tracking-poll/orders`, { params, timeout: 15000 })
+      .then(r => {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(r.data));
+      })
+      .catch(err => {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: err.message }));
+      });
+    return;
+  }
+
+  // Orders page
+  if (pathname === '/orders') {
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.end(ORDERS_HTML);
+    return;
+  }
+
   // Settings GET
   if (pathname === '/api/settings' && req.method === 'GET') {
     const s = { ...loadSettings() };
@@ -350,7 +377,8 @@ input[type=checkbox]{accent-color:#4dabf7}
 <div class="row" style="align-items:center">
   <h1 style="flex:1">Cron Tracking PrimeHorizon</h1>
   <span id="badge" class="badge idle">Idle</span>
-  <a href="/logout" style="margin-left:10px;font-size:11px;color:#666;text-decoration:none;padding:4px 10px;border:1px solid #2a2d3a;border-radius:5px">Logout</a>
+  <a href="/orders" style="margin-left:10px;font-size:11px;color:#4dabf7;text-decoration:none;padding:4px 10px;border:1px solid #1e4d7b;border-radius:5px">📦 Orders</a>
+  <a href="/logout" style="margin-left:6px;font-size:11px;color:#666;text-decoration:none;padding:4px 10px;border:1px solid #2a2d3a;border-radius:5px">Logout</a>
 </div>
 <div class="row" id="statsRow">
   <div class="stat-box"><div class="stat-val" id="s_tracked">—</div><div class="stat-lbl">Tracked</div></div>
@@ -519,6 +547,151 @@ async function saveSettings(e) {
   addLog({ts:new Date().toISOString(),level:'ok',message:'Settings đã lưu & cron đã reschedule.'});
   loadSettingsForm();
 }
+</script>
+</body>
+</html>`;
+
+// ── Orders HTML ───────────────────────────────────────────────────────────────
+const ORDERS_HTML = `<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Orders — Cron Tracking PrimeHorizon</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;background:#0f111a;color:#c8cdd9;padding:16px;display:flex;flex-direction:column;gap:12px;min-height:100vh}
+h1{font-size:17px;color:#e6eaf2}
+a.back{font-size:12px;color:#4dabf7;text-decoration:none;padding:4px 10px;border:1px solid #2a2d3a;border-radius:5px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+select,input[type=number]{background:#1a1d2e;border:1px solid #2a2d3a;border-radius:5px;padding:5px 10px;color:#e6eaf2;font-size:12px}
+.btn{padding:6px 14px;border:1px solid #2a2d3a;border-radius:6px;background:#1a1d2e;color:#c8cdd9;cursor:pointer;font-size:12px}
+.btn:hover{background:#252840}
+.btn.primary{background:#1a3a5c;border-color:#1e4d7b;color:#4dabf7}
+.total{color:#666;font-size:12px;margin-left:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;padding:8px 10px;color:#666;border-bottom:1px solid #1a1d2e;white-space:nowrap;font-weight:500}
+td{padding:7px 10px;border-bottom:1px solid #141620;vertical-align:top}
+tr:hover td{background:#141620}
+.chip{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+.chip.delivered{background:#1a3a2e;color:#74c69d}
+.chip.in_transit{background:#1a2f4d;color:#4dabf7}
+.chip.out_for_delivery{background:#3a3000;color:#ffd43b}
+.chip.pre_shipment,.chip.unknown{background:#2a2d3a;color:#888}
+.chip.alert,.chip.return_to_sender{background:#3a1a1a;color:#f77}
+.chip.available_for_pickup{background:#2a3a1a;color:#95d47a}
+.tracking{font-family:Menlo,monospace;font-size:11px;color:#aab}
+.desc{color:#888;font-size:11px;max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pager{display:flex;gap:6px;align-items:center;justify-content:center;padding-top:4px}
+.pager span{font-size:12px;color:#666}
+#loading{color:#666;padding:20px;text-align:center}
+</style>
+</head>
+<body>
+<div style="display:flex;align-items:center;gap:12px">
+  <h1>Orders — Tracking</h1>
+  <a class="back" href="/">← Dashboard</a>
+</div>
+<div class="toolbar">
+  <select id="statusFilter" onchange="load(1)">
+    <option value="">Tất cả (đã check)</option>
+    <option value="pre_shipment">Pre-Shipment</option>
+    <option value="in_transit">In Transit</option>
+    <option value="out_for_delivery">Out for Delivery</option>
+    <option value="available_for_pickup">Available for Pickup</option>
+    <option value="delivered">Delivered</option>
+    <option value="alert">Alert</option>
+    <option value="return_to_sender">Return to Sender</option>
+  </select>
+  <button class="btn primary" onclick="load(currentPage)">⟳ Refresh</button>
+  <span class="total" id="totalLabel"></span>
+</div>
+<div id="loading">Đang tải…</div>
+<table id="tbl" style="display:none">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Etsy Order ID</th>
+      <th>Buyer</th>
+      <th>Store</th>
+      <th>Tracking</th>
+      <th>Status</th>
+      <th>Mô tả</th>
+      <th>Fulfilled</th>
+      <th>Last Event</th>
+    </tr>
+  </thead>
+  <tbody id="tbody"></tbody>
+</table>
+<div class="pager" id="pager" style="display:none">
+  <button class="btn" id="btnPrev" onclick="load(currentPage-1)">‹ Trước</button>
+  <span id="pageLabel"></span>
+  <button class="btn" id="btnNext" onclick="load(currentPage+1)">Tiếp ›</button>
+</div>
+<script>
+let currentPage = 1;
+let totalPages = 1;
+const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const fmt = iso => iso ? new Date(iso).toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',hour12:false}) : '—';
+const STATUS_LABELS = {
+  pre_shipment:'Pre-Shipment', in_transit:'In Transit', out_for_delivery:'Out for Delivery',
+  available_for_pickup:'For Pickup', delivered:'Delivered', alert:'Alert',
+  return_to_sender:'Return', unknown:'Unknown'
+};
+
+async function load(page) {
+  currentPage = Math.max(1, page || 1);
+  const status = document.getElementById('statusFilter').value;
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('tbl').style.display = 'none';
+  document.getElementById('pager').style.display = 'none';
+
+  const params = new URLSearchParams({ page: currentPage, per_page: 50 });
+  if (status) params.set('status', status);
+  const r = await fetch('/api/orders?' + params).then(r=>r.json()).catch(()=>({ok:false}));
+
+  document.getElementById('loading').style.display = 'none';
+  if (!r.ok && r.success === false) {
+    document.getElementById('loading').textContent = 'Lỗi: ' + (r.error || r.message || 'unknown');
+    document.getElementById('loading').style.display = 'block';
+    return;
+  }
+
+  const items = r.data?.items || [];
+  const pagination = r.data?.pagination || {};
+  totalPages = pagination.total_pages || 1;
+  document.getElementById('totalLabel').textContent = 'Tổng: ' + (pagination.total || 0) + ' đơn';
+
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = '';
+  if (!items.length) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#666;padding:20px">Không có đơn nào</td></tr>';
+  } else {
+    items.forEach((item, i) => {
+      const st = item.status || 'unknown';
+      const label = STATUS_LABELS[st] || st;
+      tbody.innerHTML += '<tr>' +
+        '<td style="color:#666">' + ((currentPage-1)*50 + i + 1) + '</td>' +
+        '<td>' + esc(item.etsy_order_id || item.order_id) + '</td>' +
+        '<td>' + esc(item.buyer_name || '—') + '</td>' +
+        '<td>' + esc(item.store_name || '—') + '</td>' +
+        '<td class="tracking">' + esc(item.tracking_number || '—') + (item.tracking_carrier ? '<br><span style="color:#555">'+esc(item.tracking_carrier)+'</span>' : '') + '</td>' +
+        '<td><span class="chip ' + st + '">' + esc(label) + '</span></td>' +
+        '<td class="desc" title="' + esc(item.status_description||'') + '">' + esc(item.status_description || '—') + '</td>' +
+        '<td style="white-space:nowrap">' + fmt(item.fulfilled_at) + '</td>' +
+        '<td style="white-space:nowrap">' + fmt(item.last_event_at) + '</td>' +
+        '</tr>';
+    });
+  }
+
+  document.getElementById('tbl').style.display = 'table';
+  document.getElementById('pager').style.display = 'flex';
+  document.getElementById('pageLabel').textContent = 'Trang ' + currentPage + ' / ' + totalPages;
+  document.getElementById('btnPrev').disabled = currentPage <= 1;
+  document.getElementById('btnNext').disabled = currentPage >= totalPages;
+}
+
+load(1);
 </script>
 </body>
 </html>`;
