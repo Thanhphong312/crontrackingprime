@@ -205,6 +205,7 @@ function router(req, res) {
     const s = loadSettings();
     const params = {};
     if (url.searchParams.get('status')) params.status = url.searchParams.get('status');
+    if (url.searchParams.get('sort_by')) params.sort_by = url.searchParams.get('sort_by');
     if (url.searchParams.get('page')) params.page = url.searchParams.get('page');
     if (url.searchParams.get('per_page')) params.per_page = url.searchParams.get('per_page');
     axios.get(`${s.apiBase}/api/tracking-poll/orders`, { params, timeout: 15000 })
@@ -603,6 +604,10 @@ tr:hover td{background:#141620}
     <option value="alert">Alert</option>
     <option value="return_to_sender">Return to Sender</option>
   </select>
+  <select id="sortBy" onchange="load(1)">
+    <option value="ordered_at">Sắp xếp: Ngày tạo đơn</option>
+    <option value="fulfilled_at">Sắp xếp: Ngày fulfill</option>
+  </select>
   <button class="btn primary" onclick="load(currentPage)">⟳ Refresh</button>
   <span class="total" id="totalLabel"></span>
 </div>
@@ -647,8 +652,10 @@ async function load(page) {
   document.getElementById('tbl').style.display = 'none';
   document.getElementById('pager').style.display = 'none';
 
+  const sortBy = document.getElementById('sortBy').value;
   const params = new URLSearchParams({ page: currentPage, per_page: 50 });
   if (status) params.set('status', status);
+  if (sortBy) params.set('sort_by', sortBy);
   const r = await fetch('/api/orders?' + params).then(r=>r.json()).catch(()=>({ok:false}));
 
   document.getElementById('loading').style.display = 'none';
