@@ -9,6 +9,7 @@ const axios = require('axios');
 
 const STATUS_MAP = {
   DE: 'delivered',
+  SP: 'delivered',           // delivered to parcel locker
   IT: 'in_transit',
   AC: 'pre_shipment',       // accepted by carrier
   AT: 'in_transit',          // delivery attempted
